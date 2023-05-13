@@ -4,12 +4,26 @@ import chisel3._
 import chisel3.util._
 
 // TODO: update this module to implement stride prefetcher's IO.
-class StridePrefetcherIO(M: Int, N: Int) extends Bundle {
-  val a = Input(Vec(M * N, SInt(32.W)))
-  val b = Input(Vec(M * N, SInt(32.W)))
+class StridePrefetcherIO(addressWidth: Int, pcWidth: Int) extens Bundle{
 
-  val out = Output(Vec(M * N, SInt(32.W)))
+    val io = IO(new Bundle{
 
-  override def cloneType =
-    new StridePrefetcherIO(M, N).asInstanceOf[this.type]
+        val PC = Input(UInt(pcWidth.W))
+        val address = Input(UInt(addressWidth.W))
+
+        prefetch_valid = Output(Bool())
+        prefetch_address = Output(UInt(adressWidth.W))
+
+    })
+ 
+class Entry(addressWidth:Int,pcWidth:Int) extends Bundle{
+    val io = IO(new Bundle{
+        val PC = Input(UInt(pcWidth.W))
+        val prev_address = Input(UInt(addressWidth.W))
+        val prev_stride = Input(UInt(addressWidth.W))
+
+        val prefetch_address = Output(UInt(addressWidth.W))
+    })
+}
+
 }
