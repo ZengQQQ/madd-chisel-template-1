@@ -5,18 +5,54 @@ import chisel3.util._
 import chisel3.stage.{ChiselStage, ChiselGeneratorAnnotation}
 
 // TODO: update this module to implement stride prefetching.
-class StridePrefetcher(M: Int, N: Int) extends Module {
-  val io = IO(new StridePrefetcherIO(M, N))
+ class StridePrefetcher(address_width: Int, pc_width: Int) extends Module {
+  val io = IO(new Bundle {
+    val address = Input(UInt(address_width.W)) // 输入地址
+    val PC = Input(UInt(pc_width.W)) // 输入PC
+    val prefetch_address = Output(UInt(address_width.W)) // 输出预取地址
+    val prefetch_valid = Output(Bool()) // 输出是否有效预取地址
+  })
 
-  io.out := DontCare
+  // 实例化一个LookupTable模块，假设容量为16
+  val table = Module(new LookupTable(16,pc_width,address_width))
 
-  for (i <- 0 until M) {
-    for (j <- 0 until N) {
-      var sum = 0.S(32.W)
+  // 连接输入到LookupTable模块的输入端口
+  table.io.PC := io.PC
+  table.io.address := io.address
 
-      sum = io.a(i * N + j) + io.b(i * N + j)
+  // 处理当前访问的地址和程序计数器，计算步长，并根据步长是否与上一次相同来决定是否生成预取地址并预取数据
 
-      io.out(i * N + j) := sum
-    }
+  // 定义一个寄存器来存储上一次访问的地址和步长，初始值为0
+  val last_address = RegInit(0.U(address_width.W))
+  val last_stride = RegInit(0.S(address_width.W))
+
+  // 计算当前步长，注意要转换成有符号整数才能做减法运算
+  val current_stride = (io.address.asSInt() - last_address.asSInt())
+
+
+  // 定义一个信号来表示当前步长是否与上一次相同，使用===来比较
+  val same_stride = Wire(Bool())
+  same_stride := current_stride === last_stride
+
+  // 定义一个信号来表示是否需要预取，使用&&来做逻辑与运算
+  val need_prefetch = Wire(Bool())
+  need_prefetch := table.io.valid && same_stride
+
+  // 定义一个信号来表示预取地址，使用+来做加法运算
+  val prefetch_address = Wire(UInt(address_width.W))
+  prefetch_address := io.address + current_stride.asUInt()
+
+  // 连接输出到StridePrefetcher模块的输出端口
+  io.prefetch_address := prefetch_address
+  io.prefetch_valid := need_prefetch
+
+  // 更新寄存器的值，使用:=来做赋值操作
+  last_address := io.address
+  last_stride := current_stride
+
+  // 更新LookupTable模块中的条目，使用when来做条件判断
+  when (table.io.valid) {
+    table.io.entry.prev_address := io.address
+    table.io.entry.prev_stride := current_stride.asSInt()
   }
 }
