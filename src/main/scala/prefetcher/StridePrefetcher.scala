@@ -5,13 +5,14 @@ import chisel3.util._
 import chisel3.stage.{ChiselStage, ChiselGeneratorAnnotation}
 
 // TODO: update this module to implement stride prefetching.
- class StridePrefetcher(address_width: Int, pc_width: Int) extends Module {
-  val io = IO(new Bundle {
-    val address = Input(UInt(address_width.W)) // 输入地址
-    val PC = Input(UInt(pc_width.W)) // 输入PC
-    val prefetch_address = Output(UInt(address_width.W)) // 输出预取地址
-    val prefetch_valid = Output(Bool()) // 输出是否有效预取地址
-  })
+ class StridePrefetcher(pc_width: Int,address_width: Int) extends Module {
+  // val io = IO(new Bundle {
+  //   val address = Input(UInt(address_width.W)) // 输入地址
+  //   val PC = Input(UInt(pc_width.W)) // 输入PC
+  //   val prefetch_address = Output(UInt(address_width.W)) // 输出预取地址
+  //   val prefetch_valid = Output(Bool()) // 输出是否有效预取地址
+  // })
+  val io = IO(new StridePrefetcherIO(address_width, pc_width))
 
   // 实例化一个LookupTable模块，假设容量为16
   val table = Module(new LookupTable(16,pc_width,address_width))
