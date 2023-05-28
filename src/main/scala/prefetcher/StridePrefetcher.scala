@@ -45,7 +45,7 @@ val capacity = 16
  val prefetch_address = Wire(UInt(address_width.W))
  prefetch_address := io.address + current_stride.asUInt()
 
- // 连接输出到StridePrefetcher模块的输出端口
+  // 连接输出到StridePrefetcher模块的输出端口
  io.prefetch_address := prefetch_address
  io.prefetch_valid := need_prefetch
 
@@ -58,8 +58,8 @@ val capacity = 16
 
  // 更新LookupTable模块中的条目，使用when来做条件判断
  when (table.io.valid) {
- table.io.entry(index).prev_address := io.address
- table.io.entry(index).prev_stride := current_stride.asSInt()
+ table.io.entry.in(index).prev_address := io.address
+ table.io.entry.in(index).prev_stride := current_stride.asSInt()
  // 更新索引寄存器的值，如果达到最大容量就归零，否则加一
  index := Mux(index === (capacity - 1).U, 0.U, index + 1.U)
  }
