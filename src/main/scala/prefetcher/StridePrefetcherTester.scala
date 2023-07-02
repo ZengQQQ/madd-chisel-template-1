@@ -68,9 +68,8 @@ class StridePrefetcherTester(dut: StridePrefetcher) extends PeekPokeTester(dut) 
 def test_non_sequential_access() {
   // Define a variable to store the current address
   var address = 0
-
+  val non_sequential = Array(0,8,16,24,32,40,48,56,60,72)
   // Define a variable to store the expected prefetch address
-  var prefetch_address = 0
 
   // Initialize counters
   var totalAccesses = 0
@@ -78,15 +77,15 @@ def test_non_sequential_access() {
   var totalPrefetches = 0
   println(s"test  non_sequential access")
   // Loop for 10 times
-  for (i <- 0 until 10) {
+  for (i <- 0 until 9) {
     // Poke the PC and the address
     poke(dut.io.pc, 0)
-    poke(dut.io.address, address)
+    poke(dut.io.address, non_sequential(i))
 
     // If it is not the first access, expect a prefetch
     if (i > 0) {
       expect(dut.io.prefetch_valid, true.B)
-      expect(dut.io.prefetch_address, prefetch_address)
+      expect(dut.io.prefetch_address, non_sequential(i+1))
       totalPrefetches += 1
     } else {
       // Otherwise, expect no prefetch
@@ -94,14 +93,14 @@ def test_non_sequential_access() {
     }
 
     // Update the address and the prefetch address by adding 8
-    address += 8
-    prefetch_address += 8
+    // address += 8
+    // prefetch_address += 8
 
     // Update counters
     totalAccesses += 1
 
     // Check if the prefetch was correct
-    if (i > 0 && peek(dut.io.prefetch_valid) == 1 && peek(dut.io.prefetch_address) == prefetch_address) {
+    if (i > 0 && peek(dut.io.prefetch_valid) == 1 && peek(dut.io.prefetch_address) ==non_sequential(i+1)) {
       correctPrefetches += 1
     }
 
