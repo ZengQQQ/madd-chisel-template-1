@@ -1,2 +1,2 @@
 
-sbt "runMain prefetcher.StridePrefetcherTester"
+sbt "runMain prefetcher.MarkovPrefetcherTester"
