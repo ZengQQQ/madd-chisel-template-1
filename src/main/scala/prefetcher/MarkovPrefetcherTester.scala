@@ -84,7 +84,7 @@ class MarkovPrefetcherTester(dut: MarkovPrefetcher) extends PeekPokeTester(dut) 
       header + rows.mkString("\n")
     }
     // val results = scala.collection.mutable.Map[String, Float]()
-
+    
     println("Sequential access pattern:")
     sequentialPatternTest()
 
@@ -100,9 +100,12 @@ class MarkovPrefetcherTester(dut: MarkovPrefetcher) extends PeekPokeTester(dut) 
 }
 
 
-
 object MarkovPrefetcherTester extends App {
-  chisel3.iotesters.Driver(() => new MarkovPrefetcher) { dut =>
-    new MarkovPrefetcherTester(dut)
+  def runTests(): Unit = {
+    chisel3.iotesters.Driver(() => new MarkovPrefetcher) { dut =>
+      new MarkovPrefetcherTester(dut)
+    }
   }
+
+  runTests()
 }
