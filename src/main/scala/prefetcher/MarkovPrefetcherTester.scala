@@ -3,7 +3,7 @@ package prefetcher
 import chisel3.iotesters._
 import chisel3._
 import scala.collection.mutable.ListBuffer
-
+import scala.util.Random
 class MarkovPrefetcherTester(dut: MarkovPrefetcher) extends PeekPokeTester(dut) {
   def simulateMemoryAccesses(addresses: List[Int]): Unit = {
     var totalAccesses = 0
@@ -16,68 +16,72 @@ class MarkovPrefetcherTester(dut: MarkovPrefetcher) extends PeekPokeTester(dut) 
 
       totalAccesses += 1
       poke(dut.io.address, currentAddress.U)
-      step(1)
-
-      if (peek(dut.io.prefetch_hit) == 1) {
+      
+      if(peek(dut.io.prefetchHit) == BigInt(1)) {//判断是否预取
         totalPrefetches += 1
-        println("Prefetch !")
-        if (peek(dut.io.prefetch_address) == BigInt(nextAddress)) {//比较上一次的提取地址是否和当前的地址相同
+        if (peek(dut.io.prefetchAddress) == BigInt(nextAddress)) {//比较上一次的提取地址是否和当前的地址相同
           correctPrefetches += 1
           println("Prefetch correct")
+          println("now address: " + currentAddress+"prefetch address: "+peek(dut.io.prefetchAddress) + "next address: " + nextAddress)
         }
       } else {
+        println("now address: " + currentAddress+"prefetch address: "+peek(dut.io.prefetchAddress) + "next address: " + nextAddress)
         println("No Prefetch ")
       }
+      step(1)
 }
-
-    val accuracy = correctPrefetches.toFloat / totalPrefetches.toFloat //返回准确率
+    var accuracy = 0.0f
+    if(totalPrefetches == 0){
+      accuracy  = 10
+    }else{
+      accuracy = correctPrefetches.toFloat / totalPrefetches.toFloat //返回准确率
+    }
     val coverage = totalPrefetches.toFloat / totalAccesses.toFloat //返回覆盖率
     println(s"accuracy: $accuracy")
     println(s"coverage: $coverage")
   }
 
   def sequentialPatternTest(){
-    val memoryAccesses1 = generateSequentialPattern(10)
+    val memoryAccesses1 = generateSequentialPattern(16)
+    println(memoryAccesses1.toString())
     simulateMemoryAccesses(memoryAccesses1)
   }
 
   def stridedPatternTest(){
-    val memoryAccesses2 = generateStridedPattern(0, 2, 10)
+    val memoryAccesses2 = generateStridedPattern(0, 2, 16)
+    println(memoryAccesses2.toString())
     simulateMemoryAccesses(memoryAccesses2)
   }
 
   def interleavedPatternTest(){
-    val memoryAccesses3 = generateInterleavedPattern(10)
+    val memoryAccesses3 = generateInterleavedPattern(16)
+    println(memoryAccesses3.toString())
     simulateMemoryAccesses(memoryAccesses3)
   }
 
   def randomPatternTest(){
-    val memoryAccesses4 = generateRandomPattern(10)
+    val memoryAccesses4 = generateRandomPattern(16)
+    println(memoryAccesses4.toString())
     simulateMemoryAccesses(memoryAccesses4)
   }
 
-  def generateSequentialPattern(length: Int): List[Int] = {
+    def generateSequentialPattern(length: Int): List[Int] = {
       (0 until length).toList
     }
 
     def generateStridedPattern(start: Int, stride: Int, length: Int): List[Int] = {
-      (start until (start + stride * length) by stride).toList
+      (0 until length).map(i => start + i * stride).toList
     }
 
     def generateInterleavedPattern(length: Int): List[Int] = {
-      val pattern = new ListBuffer[Int]
-      for (j <- 0 until length / 2) {
-        pattern += 2 * j
-        pattern += 2 * j + 1
-      }
-      pattern.toList
-    }
+    List.tabulate(length)(i => Seq(1, 2, 3, 5, 7, 1, 2, 3, 5, 7, 1, 11, 2, 3, 1, 11)(i % 16))
+  }
+
 
     def generateRandomPattern(length: Int): List[Int] = {
-      val random = new scala.util.Random
-      List.fill(length)(random.nextInt(length))
+      val random = new Random()
+      (0 until length).map(_ => random.nextInt(length)).toList
     }
-
     def generateMarkdownTable(results: Map[String, Float]): String = {
       val header = "| 访问模式 | 预测准确性 |\n| -------- | ---------- |\n"
       val rows = results.map { case (key, value) => s"| $key | $value |" }
