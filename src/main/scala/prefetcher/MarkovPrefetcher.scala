@@ -15,7 +15,6 @@ class MarkovPrefetcher extends Module {
   val markovTable = SyncReadMem(16, new MarkovNode)
 
   val prev_address = RegInit(0.U(32.W))
-
   when(prev_address =/= 0.U){
     // Update the entry in the linked list (add transition)
     markovTable(prev_address).transitions(io.address) := markovTable(prev_address).transitions(io.address) + 1.U

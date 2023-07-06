@@ -22,10 +22,8 @@ class MarkovPrefetcherTester(dut: MarkovPrefetcher) extends PeekPokeTester(dut) 
         if (peek(dut.io.prefetchAddress) == BigInt(nextAddress)) {//比较上一次的提取地址是否和当前的地址相同
           correctPrefetches += 1
           println("Prefetch correct")
-          println("now address: " + currentAddress+"prefetch address: "+peek(dut.io.prefetchAddress) + "next address: " + nextAddress)
         }
       } else {
-        println("now address: " + currentAddress+"prefetch address: "+peek(dut.io.prefetchAddress) + "next address: " + nextAddress)
         println("No Prefetch ")
       }
       step(1)
